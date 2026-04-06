@@ -21,7 +21,9 @@ class GeminiProvider(LLMProvider):
 
         response = self.model.generate_content(
             full_prompt,
-            generation_config={"stop_sequences": ["Observation:"]}
+            generation_config=genai.types.GenerationConfig(
+                max_output_tokens=2048,
+            )
         )
 
         end_time = time.time()
