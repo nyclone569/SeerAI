@@ -11,8 +11,8 @@ import os
 
 SIMULATE_API_ERROR = False
 
-# Đăng ký tài khoản dùng thử (chỉ cần chạy 1 lần)
-register_user(os.getenv("VNSTOCK_API_KEY"))
+# Vnstock API key đã được đăng ký và lưu vĩnh viễn (chạy register_user 1 lần duy nhất).
+# Không gọi lại register_user() ở đây để tránh bị hỏi interactive mỗi lần reload.
 
 def GetPrice(symbol: str) -> str:
     """Gets the latest close/intraday price for a VN stock symbol."""
