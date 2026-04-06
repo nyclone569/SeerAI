@@ -16,7 +16,7 @@
 
 | Module | Role |
 | :--- | :--- |
-| `src/tools/get_info_tool.py` | Tool `GetStockInfo` — dùng **Gemma 4** để tóm tắt thông tin công ty từ dữ liệu cấu trúc |
+| `src/agent/tools.py` | Tool `GetStockInfo` — dùng **Gemma 4** để tóm tắt thông tin công ty từ dữ liệu cấu trúc |
 | `src/agent/agent.py` | Hoàn thiện `run()` và `_execute_tool()` — vòng lặp Thought-Action-Observation |
 
 ### I.2 Code Highlights
