@@ -136,12 +136,8 @@ if prompt := st.chat_input("Hỏi tôi về giá mã chứng khoán (VD: Giá FP
                             for flag in agent.security_flags:
                                 st.warning(flag)
                     
-                    # === DEBUG: LLM Raw Output ===
-                    with st.expander("🐛 Debug: LLM Raw Output"):
-                        for trace in agent.trace_log:
-                            if trace.get("type") == "react_loop":
-                                st.code(trace.get("llm_raw", ""), language="text")
-                    
+
+
                     st.session_state.messages.append({"role": "assistant", "content": result, "meta": meta_str})
             except Exception as e:
                 error_msg = f"Đã xảy ra lỗi hệ thống: {str(e)}"
