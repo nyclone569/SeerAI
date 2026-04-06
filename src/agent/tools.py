@@ -21,16 +21,18 @@ def GetPrice(symbol: str) -> str:
     
     symbol = symbol.upper().strip()
     
+    # Validate: loại bỏ ký tự không hợp lệ
+    if not symbol.isalpha() or len(symbol) < 2 or len(symbol) > 5:
+        return f"Mã cổ phiếu '{symbol}' không hợp lệ. Mã hợp lệ gồm 2-5 chữ cái (VD: FPT, HPG, VCB)."
+    
     try:
-        # Sử dụng page_size=10000 để đảm bảo tải dữ liệu mới nhất (theo yêu cầu)
         df = Vnstock().stock(symbol=symbol, source='VCI').quote.intraday(symbol=symbol, page_size=10000, show_log=False)
         if df is None or df.empty:
-            return f"Không tìm thấy dữ liệu giá realtime cho mã {symbol}."
+            return f"Không tìm thấy dữ liệu giá realtime cho mã {symbol}. Vui lòng kiểm tra lại mã cổ phiếu."
         
         last_row = df.iloc[-1]
-        latest_price = last_row["price"] * 1000 # vnstock trả về mốc chia 1000
+        latest_price = last_row["price"] * 1000
         
-        # Đảm bảo hiển thị đúng múi giờ GMT+7
         dt = pd.to_datetime(last_row["time"])
         if dt.tzinfo is None:
             dt = dt.tz_localize('Asia/Ho_Chi_Minh')
@@ -39,8 +41,11 @@ def GetPrice(symbol: str) -> str:
             
         formatted_time = dt.strftime('%H:%M:%S %d-%m-%Y')
         return f"Giá hiện tại của {symbol} (cập nhật lúc {formatted_time} GMT+7) là {latest_price:,.0f} VND"
+    except ConnectionError:
+        raise  # Lỗi mạng thật → cho Agent retry
     except Exception as e:
-        raise ConnectionError(f"API VNDirect lỗi: {str(e)}")
+        # Lỗi do mã không tồn tại hoặc dữ liệu rỗng → trả kết quả thân thiện, KHÔNG retry
+        return f"Không thể tra cứu mã '{symbol}'. Mã này có thể không tồn tại trên sàn VN. Lỗi: {str(e)}"
 
 def CreateChart(symbol: str) -> str:
     """Creates a technical chart for a symbol. Returns a confirmation string for the UI."""
