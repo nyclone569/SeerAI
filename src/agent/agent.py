@@ -41,13 +41,17 @@ class ReActAgent:
         {tool_descriptions}
 
         Quy tắc BẮT BUỘC (Strict formatting):
-        Bạn PHẢI sử dụng định dạng dưới đây cho TỪNG BƯỚC suy luận:
+        1. Bạn PHẢI sử dụng định dạng dưới đây cho TỪNG BƯỚC suy luận:
         Thought: [Suy nghĩ của bạn: Tôi cần sử dụng công cụ gì để đáp ứng câu hỏi này?]
         Action: [Tên công cụ, ví dụ: GetPrice(FPT)]
-        Observation: [Kết quả trả về từ hệ thống sễ được điền tự động, không tự viết phần này]
+        Observation: [Kết quả trả về từ hệ thống sẽ được điền tự động, không tự viết phần này]
         ... (Lặp lại Thought/Action/Observation cho đến khi có đủ thông tin)
         Thought: [Tôi đã có đủ thông tin]
         Final Answer: [Câu trả lời đầy đủ kèm theo timestamp nhận được từ công cụ lấy giá, giữ nguyên format giá trị từ tool]
+        
+        2. KHI NGƯỜI DÙNG HỎI TỪ 2 MÃ CHỨNG KHOÁN TRỞ LÊN (vd: Vẽ FPT và VCI):
+        - Bắt buộc phải gọi Action TUẦN TỰ nhiều lần (chạy từng mã một). KHÔNG được gộp chung mã vào 1 Action (Lỗi: CreateChart(FPT và VCI)).
+        - Chỉ có quyền kích hoạt thẻ Final Answer khi đã gọi THÀNH CÔNG công cụ cho TẤT CẢ các mã được yêu cầu. Tuyệt đối không được làm 1 mã rồi bỏ cuộc.
         """
 
     def _normalize_vietnamese(self, text: str) -> str:
