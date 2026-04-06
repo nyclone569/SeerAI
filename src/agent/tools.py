@@ -1,29 +1,42 @@
 import datetime
+from zoneinfo import ZoneInfo
 import plotly.graph_objects as go
 import pandas as pd
 from typing import Dict, Any, List
-from vnstock import Vnstock
+from vnstock import Vnstock, register_user
 
-# In a real environment, vnstock fetches from VNDirect/TCBS/SSI.
+# Đăng nhập bằng API Key để cải thiện độ chuẩn xác/giới hạn dữ liệu từ hệ thống cấp dữ liệu
+register_user('vnstock_503967bcbf987a7a89727aa469fb957b')
+
 # We will use vnstock for real data, but allow simulating an error for testing.
 
 SIMULATE_API_ERROR = False
 
 def GetPrice(symbol: str) -> str:
-    """Gets the latest close price for a VN stock symbol."""
+    """Gets the latest close/intraday price for a VN stock symbol."""
     if SIMULATE_API_ERROR:
         raise ConnectionError("API VNDirect bị bảo trì / Timeout")
     
     symbol = symbol.upper().strip()
-    end_date = datetime.date.today().strftime("%Y-%m-%d")
-    start_date = (datetime.date.today() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
     
     try:
-        df = Vnstock().stock(symbol=symbol, source='VCI').quote.history(start=start_date, end=end_date)
-        if df.empty:
-            return f"Không tìm thấy dữ liệu giá cho mã {symbol}."
-        latest_price = df.iloc[-1]["close"] * 1000 # vnstock trả về giá x1000
-        return f"Giá hiện tại của {symbol} là {latest_price:,.0f} VND"
+        # Sử dụng page_size=10000 để đảm bảo tải dữ liệu mới nhất (theo yêu cầu)
+        df = Vnstock().stock(symbol=symbol, source='VCI').quote.intraday(symbol=symbol, page_size=10000, show_log=False)
+        if df is None or df.empty:
+            return f"Không tìm thấy dữ liệu giá realtime cho mã {symbol}."
+        
+        last_row = df.iloc[-1]
+        latest_price = last_row["price"] * 1000 # vnstock trả về mốc chia 1000
+        
+        # Đảm bảo hiển thị đúng múi giờ GMT+7
+        dt = pd.to_datetime(last_row["time"])
+        if dt.tzinfo is None:
+            dt = dt.tz_localize('Asia/Ho_Chi_Minh')
+        else:
+            dt = dt.tz_convert('Asia/Ho_Chi_Minh')
+            
+        formatted_time = dt.strftime('%H:%M:%S %d-%m-%Y')
+        return f"Giá hiện tại của {symbol} (cập nhật lúc {formatted_time} GMT+7) là {latest_price:,.0f} VND"
     except Exception as e:
         raise ConnectionError(f"API VNDirect lỗi: {str(e)}")
 
@@ -33,8 +46,13 @@ def CreateChart(symbol: str) -> str:
         raise ConnectionError("API VNDirect bị bảo trì / Timeout")
 
     symbol = symbol.upper().strip()
-    end_date = datetime.date.today().strftime("%Y-%m-%d")
-    start_date = (datetime.date.today() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    # Lấy ngày theo múi giờ Việt Nam (GMT+7) chứ không phụ thuộc giờ server
+    vn_tz = datetime.timezone(datetime.timedelta(hours=7))
+    vn_now = datetime.datetime.now(vn_tz)
+    
+    end_date = vn_now.strftime("%Y-%m-%d")
+    start_date = (vn_now - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
     
     try:
         df = Vnstock().stock(symbol=symbol, source='VCI').quote.history(start=start_date, end=end_date)

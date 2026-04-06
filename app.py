@@ -12,13 +12,13 @@ load_dotenv()
 st.set_page_config(page_title="VNStock AI Agent", page_icon="📈", layout="wide")
 
 st.title("📈 VNStock ReAct Agent")
-st.markdown("Hệ thống Hỏi đáp Chứng khoán thông minh sử dụng Gemma 4 và LangChain logic (ReAct).")
+st.markdown("Hệ thống Hỏi đáp Chứng khoán thông minh sử dụng Gemini-2.5-Flash và LangChain logic (ReAct).")
 
 # Setup Sidebar Config
 with st.sidebar:
     st.header("⚙️ Cấu hình")
     api_key = st.text_input("Google AI Studio API Key", type="password", value=os.getenv("GEMINI_API_KEY", ""))
-    model_name = st.text_input("Tên Model", value="gemma-4-31b-it") # Or fallback to gemini-1.5-flash
+    model_name = st.text_input("Tên Model", value="gemini-2.5-flash") # Or fallback to gemini-1.5-flash
     
     if not api_key:
         st.warning("Vui lòng cung cấp API Key để tiếp tục.")
