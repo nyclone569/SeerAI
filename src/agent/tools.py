@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
 from typing import Dict, Any, List
-from vnstock import Vnstock, register_user, Quote
+from vnstock import Vnstock, register_user, Quote, Company
 import os
 
 # We will use vnstock for real data, but allow simulating an error for testing.
@@ -54,9 +54,7 @@ def CreateChart(symbol: str) -> str:
     vn_now = datetime.datetime.now(vn_tz)
     
     end_date = vn_now.strftime("%Y-%m-%d")
-    start_date = (vn_now - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-    end_date = datetime.date.today().strftime("%Y-%m-%d")
-    start_date = (datetime.date.today() - datetime.timedelta(days=60)).strftime("%Y-%m-%d")
+    start_date = (vn_now - datetime.timedelta(days=60)).strftime("%Y-%m-%d")
     
     try:
         quote = Quote(symbol=symbol, source='VCI')
@@ -95,7 +93,7 @@ def GetInfoID(symbol: str) -> str:
     symbol = symbol.upper().strip()
     
     try:
-        company = Company(symbol=symbol, source='KBS')
+        company = Company(symbol=symbol, source='VCI')
         df = company.overview()
         
         if df is None or df.empty:
