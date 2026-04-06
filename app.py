@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from src.core.gemini_provider import GeminiProvider
 from src.agent.agent import ReActAgent
 from src.agent.tools import TOOLS
-import src.agent.tools as agent_tools
 
 # Load environment variables (e.g., GEMINI_API_KEY)
 load_dotenv()
@@ -25,8 +24,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("🛠️ **Môi trường Test**")
-    simulate_error = st.checkbox("Mô phỏng lỗi API (Testcase 5)", value=False)
-    agent_tools.SIMULATE_API_ERROR = simulate_error
+    model_mode = st.radio("Chế độ Model", ["ReAct Agent (Sử dụng Tool)", "Baseline (Không dùng Tool)"], index=0)
     
     if not api_key:
         st.error("Lỗi: Chưa cấu hình GEMINI_API_KEY trong file .env!")
@@ -62,12 +60,20 @@ if prompt := st.chat_input("Hỏi tôi về giá mã chứng khoán (VD: Giá FP
             try:
                 import time
                 start_time = time.time()
-                # Run the ReAct Loop
-                result = agent.run(prompt)
-                latency = time.time() - start_time
-                steps = getattr(agent, 'current_steps', 0)
                 
-                meta_str = f"⏱️ Thời gian xử lý: {latency:.2f}s | 🔄 Số bước suy luận (ReAct Steps): {steps}"
+                if "Baseline" in model_mode:
+                    # Chế độ Baseline: Hỏi thẳng LLM không bảo vệ bằng ReAct loop hay Tools
+                    baseline_prompt = f"Người dùng hỏi: {prompt}\nHãy đóng vai trợ lý AI trả lời dựa trên bộ nhớ gốc (Không có công cụ hỗ trợ ngoài)."
+                    response = llm.generate(baseline_prompt)
+                    result = response.get("content", "Lỗi: Không có phản hồi từ LLM.")
+                    latency = time.time() - start_time
+                    meta_str = f"⏱️ Thời gian xử lý: {latency:.2f}s | 🧠 Chế độ: Baseline (Dùng não tự đoán)"
+                else:
+                    # Run the ReAct Loop
+                    result = agent.run(prompt)
+                    latency = time.time() - start_time
+                    steps = getattr(agent, 'current_steps', 0)
+                    meta_str = f"⏱️ Thời gian xử lý: {latency:.2f}s | 🔄 Số bước suy luận (ReAct Steps): {steps}"
                 
                 st.markdown(result)
                 st.caption(meta_str)
