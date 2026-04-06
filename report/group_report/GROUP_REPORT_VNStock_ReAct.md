@@ -82,12 +82,11 @@ User Query
 - **`max_steps = 5`**: Giới hạn vòng lặp, tránh infinite loop và billing runaway.
 - **Telemetry**: Mọi sự kiện (`AGENT_START`, `TOOL_CALL`, `PARSE_ERROR`, `AGENT_END`) được ghi vào `logs/YYYY-MM-DD.json` qua `src/telemetry/logger.py`.
 
-**Agent v1 — Tool inventory (2 tools):**
+**Agent v1 — Tool inventory (1 tool):**
 
 | Tool Name | Input | Use Case |
 | :--- | :--- | :--- |
 | `GetPrice` | `string` — mã 3 chữ cái (VD: `HPG`) | Lấy giá hiện tại, đơn vị VND |
-| `CreateChart` | `string` — mã 3 chữ cái (VD: `SSI`) | Vẽ Candlestick chart qua Plotly trên Streamlit |
 
 ### 3.2 Tool Design Evolution
 <!-- Rubric: Tool Design Evolution — 4 pts -->
@@ -97,8 +96,8 @@ User Query
 | Tool Name | Input Format | Use Case | Version | Thay đổi so với trước |
 | :--- | :--- | :--- | :--- | :--- |
 | `GetPrice` | `string` — mã ticker 3 chữ cái | Giá cổ phiếu VN (VND) | v1 | *(mới)* |
-| `CreateChart` | `string` — mã ticker 3 chữ cái | Vẽ Candlestick qua Plotly | v1 | *(mới)* |
-| `GetInfo` | `string` — mã ticker 3 chữ cái | Thông tin công ty — dùng **Gemma 4** tóm tắt | v2 | *(mới — thêm sau khi phát hiện gap)* |
+| `CreateChart` | `string` — mã ticker 3 chữ cái | Vẽ Candlestick qua Plotly trên Streamlit UI | v2 | *(mới — thêm sau khi user phản hồi cần visualize)* |
+| `GetInfo` | `string` — mã ticker 3 chữ cái | Thông tin công ty — dùng **Gemma 4** tóm tắt | v2 | *(mới — thêm sau khi phát hiện gap tra cứu công ty)* |
 | `GetPrice` (v2) | `string` — mã ticker 3 chữ cái | Giá cổ phiếu VN (VND) | v2 | Thêm validation: reject input không phải 3 chữ cái VN |
 
 **Lý do thay đổi spec từ v1 → v2:**
@@ -219,8 +218,8 @@ Observation: Không tìm thấy mã 'HOAHATGROUP'.
 | Test Case | Chatbot | Agent v1 | Agent v2 | Winner |
 | :--- | :--- | :--- | :--- | :--- |
 | TC1: Giá FPT hôm nay | ❌ Hallucinated | ✅ Correct (1 step) | ✅ Correct (1 step) | **Agent** |
-| TC2: So sánh HPG và HSG | ❌ Hallucinated cả 2 | ❌ Infinite loop (v1) | ✅ Correct (2 steps) | **Agent v2** |
-| TC3: Vẽ biểu đồ SSI | ❌ Không thể render | ✅ Correct | ✅ Correct | **Agent** |
+| TC2: So sánh HPG và HSG | ❌ Hallucinated cả 2 | ❌ Infinite loop | ✅ Correct (2 steps) | **Agent v2** |
+| TC3: Vẽ biểu đồ SSI | ❌ Không thể render | ❌ Không có tool (v1 chưa có CreateChart) | ✅ Correct — `CreateChart(SSI)` | **Agent v2** |
 | TC4: Vinamilk là công ty gì? | ⚠️ Training data (thiếu vốn hoá) | ❌ Không có tool | ✅ Correct — `GetInfo(VNM)` | **Agent v2** |
 | TC5: Dự báo giá vàng | ✅ Từ chối lịch sự | ❌ Cố gọi `GetPrice(XAUUSD)` | ✅ Out-of-scope fallback | **Chatbot / Agent v2** |
 | TC6: Chứng khoán là gì? | ✅ Correct (~180ms) | ✅ Correct (~1,800ms) | ✅ Correct (~1,500ms) | **Chatbot** (latency) |
