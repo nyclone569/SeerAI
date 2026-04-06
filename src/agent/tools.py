@@ -1,13 +1,18 @@
 import datetime
 import plotly.graph_objects as go
+import streamlit as st
 import pandas as pd
 from typing import Dict, Any, List
-from vnstock import Vnstock
+from vnstock import Vnstock, register_user, Quote
+import os
 
 # In a real environment, vnstock fetches from VNDirect/TCBS/SSI.
 # We will use vnstock for real data, but allow simulating an error for testing.
 
 SIMULATE_API_ERROR = False
+
+# Đăng ký tài khoản dùng thử (chỉ cần chạy 1 lần)
+register_user(os.getenv("VNSTOCK_API_KEY"))
 
 def GetPrice(symbol: str) -> str:
     """Gets the latest close price for a VN stock symbol."""
@@ -19,7 +24,8 @@ def GetPrice(symbol: str) -> str:
     start_date = (datetime.date.today() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
     
     try:
-        df = Vnstock().stock(symbol=symbol, source='VCI').quote.history(start=start_date, end=end_date)
+        quote = Quote(symbol=symbol, source='VCI')
+        df = quote.history(start=start_date, end=end_date, interval='d')
         if df.empty:
             return f"Không tìm thấy dữ liệu giá cho mã {symbol}."
         latest_price = df.iloc[-1]["close"] * 1000 # vnstock trả về giá x1000
@@ -37,9 +43,25 @@ def CreateChart(symbol: str) -> str:
     start_date = (datetime.date.today() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
     
     try:
-        df = Vnstock().stock(symbol=symbol, source='VCI').quote.history(start=start_date, end=end_date)
+        quote = Quote(symbol=symbol, source='VCI')
+        df = quote.history(start=start_date, end=end_date, interval='d')
         if df.empty:
             return f"Không có dữ liệu để vẽ biểu đồ cho mã {symbol}."
+            
+        fig = go.Figure(data=[go.Candlestick(
+            x=df['time'],
+            open=df['open'],
+            high=df['high'],
+            low=df['low'],
+            close=df['close']
+        )])
+        
+        fig.update_layout(title=f'Biểu đồ nến {symbol}', xaxis_title='Ngày', yaxis_title='Giá', template='plotly_dark')
+        
+        if "temp_charts" not in st.session_state:
+            st.session_state.temp_charts = []
+        st.session_state.temp_charts.append(fig)
+        
         return f"Đã vẽ biểu đồ kỹ thuật mã {symbol} thành công. Tín hiệu Plotly đã được gửi tới UI."
     except Exception as e:
         raise ConnectionError(f"Lỗi khi vẽ biểu đồ: {str(e)}")
