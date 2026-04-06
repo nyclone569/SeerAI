@@ -4,11 +4,6 @@
 - **Team Members**: Võ Thiên Phú (2A202600336), Bùi Lâm Tiến (2A202600004), Trương Đăng Nghĩa (2A202600437)
 - **Deployment Date**: 2026-04-06
 
----
-
-> [!NOTE]
-> **Scoring Reference** — Group score: **45 base + up to 15 bonus = max 60 points**.
-> **Total = MIN(60, Group Base + Group Bonus) + Individual (max 40) = 100 Points Max**
 
 ---
 
@@ -266,24 +261,45 @@ Observation: Không tìm thấy mã 'HOAHATGROUP'.
 ### 7.1 Final System Flowchart (Agent v2)
 
 ```mermaid
-graph TD
-    Start(User Query) --> Guard{Intent Check\nTicker Validation}
-    Guard -- Out-of-scope / Invalid ticker --> Fallback[Fallback: Hướng dẫn về phạm vi CK VN]
-    Guard -- In-scope --> Brain[Gemma 4: Thought]
+ graph TD
+    %% Khởi đầu
+    Start(User Query) --> Guardrail{Kiểm tra phạm vi câu hỏi<br/>Intent Check}
 
-    subgraph ReAct_Loop [Thought-Action-Observation Loop - max 5 steps]
-        Brain --> Parse{Parse Action}
-        Parse -- Invalid tool name --> ErrMsg[Feed error back to LLM] --> Brain
-        Parse -- GetPrice --> P[GetPrice Tool\nReal-time price VND]
-        Parse -- CreateChart --> C[CreateChart Tool\nPlotly Candlestick UI]
-        Parse -- GetStockInfo --> I[GetStockInfo Tool\nGemma 4 summary]
-        P & C & I --> Obs[Observation]
-        Obs --> Brain
+    %% Tầng 1: Unified Fallback cho các trường hợp Out-of-Scope
+    Guardrail -- "Câu hỏi ngoài phạm vi<br/>của Agent" --> UnifiedFallback[Fallback: Unified Out-of-Scope <br>- Câu hỏi không liên quan]
+    UnifiedFallback --> UI_Msg[Hiển thị thông báo hướng <br>dẫn về đúng phạm vi CK VN]
+
+    %% Tầng 2: Luồng chính (In-Scope)
+    Guardrail -- "-Tra cứu giá cổ phiếu, thông tin liên quan<br>-Biểu đồ của cổ phiếu <br/>-Mã CK VN hợp lệ" --> AgentBrain[Gemma 4: ReAct Thinking]
+    
+    subgraph ReAct_Core [Thinking & Action loop]
+        AgentBrain --> Thought[Thought: Xác định Tool cần gọi]
+        Thought --> ActionSelection{Chọn Action}
+        
+        %% Fallback cho Action Name
+        ActionSelection -- "Sai tên Tool" --> ActionErr[Fallback: Action Error Handler <br>Gửi feedback cho Agent sửa lỗi]
+        ActionErr --> AgentBrain
+        
+        %% Thực thi Tool & Xử lý lỗi API
+        ActionSelection -- "Đúng Tool" --> Execute[Gọi API: GetPrice / <br>CreateChart / GetStockInfo]
+        Execute --> APICheck{Kết quả API?}
+        
+        APICheck -- "Lỗi (404, 500, Timeout)" --> APIFallback[Fallback: API Error Handler <br>- Gửi feedback cho Agent <br>- Chuyển sang Data Source dự phòng]
+        APIFallback --> APICheck
     end
 
-    Brain -- Final Answer --> UI[Streamlit UI Display]
-    Fallback --> UI
+    %% Tầng 3: Observation & Output
+    APICheck -- "Success" --> Observation[Observation: Nhận dữ liệu]
+    Observation --> FinalThought[Thought: Tổng hợp kết quả]
+    FinalThought --> FinalAnswer[Gemma 4: Trả lời người dùng]
+
+    %% Tầng 4: Phao cứu sinh cuối (Human Escalation)
+    APIFallback -- "Thất bại sau 3 lần" --> HumanEsc[Fallback: Human Escalation <br>Báo lỗi hệ thống & kết nối người thật]
+    
+    %% Kết thúc
+    FinalAnswer & UI_Msg & HumanEsc --> End(Hiển thị UI)
 ```
+
 
 ### 7.2 Group Learning Points
 
