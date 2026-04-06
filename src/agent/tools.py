@@ -6,6 +6,8 @@ import pandas as pd
 from typing import Dict, Any, List
 from vnstock import Vnstock, register_user, Quote, Company
 import os
+import re
+from src.telemetry.logger import logger
 
 # We will use vnstock for real data, but allow simulating an error for testing.
 
@@ -47,7 +49,8 @@ def CreateChart(symbol: str) -> str:
     if SIMULATE_API_ERROR:
         raise ConnectionError("API VNDirect bị bảo trì / Timeout")
 
-    symbol = symbol.upper().strip()
+    # Loại bỏ sạch mọi dư thừa (dấu phẩy, ngoặc kép, gạch chéo, backslash)
+    symbol = re.sub(r'[^A-Z0-9]', '', symbol.upper())
     
     # Lấy ngày theo múi giờ Việt Nam (GMT+7) chứ không phụ thuộc giờ server
     vn_tz = datetime.timezone(datetime.timedelta(hours=7))
@@ -145,6 +148,8 @@ TOOLS: List[Dict[str, Any]] = [
 
 def execute_tool_logic(tool_name: str, args: str) -> str:
     """Helper method to map tool names to Python functions."""
+    logger.log_event("TOOL_CALL", {"tool": tool_name, "args": args})
+    
     if tool_name == "GetPrice":
         return GetPrice(args)
     elif tool_name == "CreateChart":
