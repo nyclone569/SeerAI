@@ -62,26 +62,8 @@ def CreateChart(symbol: str) -> str:
     except Exception as e:
         raise ConnectionError(f"Lỗi khi vẽ biểu đồ: {str(e)}")
 
-def GetStockID(company_name: str) -> str:
-    """Tra cứu mã cổ phiếu từ tên công ty."""
-    if SIMULATE_API_ERROR:
-        raise ConnectionError("API VNDirect bị bảo trì / Timeout")
-
-    # A mock dictionary for demonstration, or we can use vnstock if it has a fuzzy search.
-    # vnstock's listing feature retrieves all stocks, but we'll mock a few for speed.
-    companies = {
-        "fpt": "FPT",
-        "hòa phát": "HPG",
-        "hoa sen": "HSG",
-        "vietcombank": "VCB",
-        "ssi": "SSI"
-    }
-    
-    for key in companies:
-        if key in company_name.lower():
-            return f"Mã cổ phiếu của {company_name} là {companies[key]}"
-            
-    return f"Không tìm thấy mã cổ phiếu hợp lệ cho công ty: {company_name}."
+def GetStockInfo(company_name: str) -> str:
+    pass
 
 # Define the tool schemas for the Agent
 TOOLS: List[Dict[str, Any]] = [
