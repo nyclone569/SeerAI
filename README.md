@@ -1,7 +1,3 @@
-Chào bạn, đây là bản tài liệu kỹ thuật (Documentation) hoàn chỉnh cho hệ thống **VNStock ReAct Agent**. Tài liệu này được thiết kế theo cấu trúc mô-đun, giúp bạn dễ dàng mở rộng thêm tính năng vẽ biểu đồ (Plotly) và tích hợp các kênh tương tác (UI/UX).
-
----
-
 # 📈 Tài liệu Kỹ thuật: VNStock ReAct Agent Hệ thống Hỏi đáp Chứng khoán thông minh
 
 Hệ thống này sử dụng mô hình ngôn ngữ lớn (LLM) kết hợp với cơ chế **ReAct (Reasoning and Acting)** để truy xuất dữ liệu chứng khoán thời gian thực tại thị trường Việt Nam.
